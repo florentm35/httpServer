@@ -1,4 +1,4 @@
-package fr.florent.httpserver.request;
+package fr.florent.httpserver.http;
 
 public enum HttpProtocole {
 

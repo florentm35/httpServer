@@ -1,22 +1,21 @@
 package fr.florent.httpserver.request;
 
 import fr.florent.httpserver.exception.http.BadRequestException;
-import fr.florent.httpserver.exception.http.EmptyRequestException;
 import fr.florent.httpserver.exception.system.SystemException;
 import fr.florent.httpserver.http.HttpHeaders;
+import fr.florent.httpserver.http.HttpMethod;
+import fr.florent.httpserver.http.HttpProtocole;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.List;
 
 public class RequestParser {
 
     private static final int ACTION_HEADER = 0;
     private static final int HEADER = 1;
-    private static final int BODY = 2;
-    private static final int END = 3;
+    private static final int END = 2;
 
 
     /**
@@ -30,17 +29,13 @@ public class RequestParser {
 
         var request = new Request();
 
-
         try {
 
             BufferedReader plec = new BufferedReader(
                     new InputStreamReader(stream));
 
 
-            StringBuilder body = new StringBuilder();
-
             int state = ACTION_HEADER;
-            boolean hasBody = false;
 
             String str;
             while (state != END && (str = plec.readLine()) != null) {
@@ -53,31 +48,28 @@ public class RequestParser {
                         break;
                     case HEADER:
                         if (str.length() == 0) {
-                            if (hasBody) {
-                                state = BODY;
-                            } else {
-                                state = END;
-                            }
+                            state = END;
                         } else {
-                            String header = parseRequestHeader(str, request);
-
-                            if (HttpHeaders.CONTENT_LENGTH.equals(header.toLowerCase())) {
-                                hasBody = true;
-                            }
+                            parseRequestHeader(str, request);
                         }
-                        break;
-                    case BODY:
-                        body.append(str);
                         break;
                 }
 
             }
 
-            String strBody = body.toString();
 
-            if (strBody != null && !strBody.isEmpty()) {
-                request.setBody(strBody);
+            String contentLength = request.getHeaders().get(HttpHeaders.CONTENT_LENGTH);
+            if (contentLength != null) {
+
+                int length = Integer.parseInt(contentLength);
+
+                char[] bodyChar = new char[length];
+                plec.read(bodyChar);
+
+                request.setBody(new String(bodyChar));
+
             }
+
 
             return request;
 
@@ -98,7 +90,7 @@ public class RequestParser {
 
     /**
      * Read the first line of request and remove it <br/>
-     * Format excepted : {@link EnumAction} String {@link HttpProtocole}
+     * Format excepted : {@link HttpMethod} String {@link HttpProtocole}
      *
      * @param requestData
      * @param request
@@ -110,9 +102,9 @@ public class RequestParser {
             throw new BadRequestException("Actions header not found");
         }
 
-        request.setAction(EnumAction.getAction(actionHeader[0]));
+        request.setMethod(HttpMethod.getAction(actionHeader[0]));
 
-        if (request.getAction() == null) {
+        if (request.getMethod() == null) {
             throw new BadRequestException(String.format("Action : %s, not implemented", actionHeader[0]));
         }
 

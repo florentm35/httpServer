@@ -1,6 +1,6 @@
 package fr.florent.httpserver.html;
 
-import fr.florent.httpserver.HttpStatus;
+import fr.florent.httpserver.http.HttpStatus;
 
 public class HtmlUtils {
 

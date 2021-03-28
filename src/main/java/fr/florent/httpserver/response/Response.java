@@ -1,7 +1,7 @@
 package fr.florent.httpserver.response;
 
-import fr.florent.httpserver.HttpStatus;
-import fr.florent.httpserver.request.HttpProtocole;
+import fr.florent.httpserver.http.HttpStatus;
+import fr.florent.httpserver.http.HttpProtocole;
 
 import java.io.OutputStream;
 import java.util.Collections;

@@ -1,16 +1,16 @@
 package fr.florent.httpserver.request;
 
-import fr.florent.httpserver.Server;
+import fr.florent.httpserver.server.CacheUrl;
+import fr.florent.httpserver.server.Server;
 import fr.florent.httpserver.exception.system.SystemException;
 import fr.florent.httpserver.process.AbstractProcess;
 import fr.florent.httpserver.response.Response;
 import fr.florent.httpserver.response.ResponseFormater;
 import org.apache.log4j.Logger;
 
-import java.io.*;
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
 public class RequestProcess {
 
@@ -24,8 +24,6 @@ public class RequestProcess {
 
     public void process() throws SystemException {
         // Un BufferedReader permet de lire par ligne.
-
-
         LOGGER.info("Message receive");
         try {
 
@@ -33,13 +31,19 @@ public class RequestProcess {
 
             Response response = ResponseFormater.createResponse(request, socket.getOutputStream());
 
-            // TODO : change this
-            AbstractProcess process = new AbstractProcess();
+            Method method = CacheUrl.getMethodFormRequest(request);
 
-            process.doProcess(request, response);
+            if (method == null) {
+                AbstractProcess process = new AbstractProcess();
+                process.doProcess(request, response);
+            }
+            else {
+                Class tClass = method.getDeclaringClass();
+                Object obj = tClass.getConstructor().newInstance();
+                method.invoke(obj, request, response);
+            }
 
             ResponseFormater.print(response);
-
 
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
