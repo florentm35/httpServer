@@ -47,6 +47,7 @@ public class Server {
             executor.submit(() -> {
                 try {
                     process.process();
+
                 } catch (SystemException e) {
                     LOGGER.error(e);
                 }

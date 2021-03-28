@@ -23,11 +23,11 @@ public class RequestProcess {
     }
 
     public void process() throws SystemException {
-        // Un BufferedReader permet de lire par ligne.
-        LOGGER.info("Message receive");
         try {
 
             Request request = RequestParser.parseRequest(socket.getInputStream());
+
+            LOGGER.info(String.format("> %s %s", request.getMethod().name(), request.getPath()));
 
             Response response = ResponseFormater.createResponse(request, socket.getOutputStream());
 
@@ -36,14 +36,15 @@ public class RequestProcess {
             if (method == null) {
                 AbstractProcess process = new AbstractProcess();
                 process.doProcess(request, response);
-            }
-            else {
+            } else {
                 Class tClass = method.getDeclaringClass();
                 Object obj = tClass.getConstructor().newInstance();
                 method.invoke(obj, request, response);
             }
 
             ResponseFormater.print(response);
+
+            LOGGER.info(String.format("< %s %s %s", request.getMethod().name(), request.getPath(), response.getStatus().code));
 
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
